@@ -7,14 +7,10 @@ import tensorflow as tf
 import io
 
 # ---------------- UI Styling ----------------
-st.set_page_config(page_title="Prediksi Harga Mobil Toyota", layout="wide")
+st.set_page_config(page_title="Prediksi Mobil Toyota", layout="wide")
 st.markdown("""
     <style>
-    body {
-        background-color: #0a0f3c;
-        color: #FFD700;
-    }
-    .stApp {
+    body, .stApp {
         background-color: #0a0f3c;
         color: #FFD700;
     }
@@ -22,6 +18,8 @@ st.markdown("""
         background-color: #FFD700;
         color: #0a0f3c;
         font-weight: bold;
+        border-radius: 8px;
+        padding: 0.5em 1em;
     }
     .stSelectbox>div, .stNumberInput>div {
         background-color: #1c1f4a;
@@ -45,6 +43,7 @@ with open('y_test.pkl', 'rb') as f:
 
 # CNN model untuk deteksi kondisi visual
 cnn_model = tf.keras.models.load_model('cnn_model.h5')
+cnn_model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])  # Optional compile
 class_labels = ['Bagus dan Mulus', 'Layak Pakai', 'perlu perbaikan']
 
 # ---------------- Fungsi Deteksi Visual ----------------
@@ -62,7 +61,7 @@ def format_price(number):
     return "{:,.0f}".format(number).replace(",", ".")
 
 # ---------------- UI Aplikasi ----------------
-st.title('🚗 Prediksi Harga Mobil Toyota Bekas + Deteksi Kondisi Visual')
+st.title('🚗 Prediksi Harga Mobil Toyota + Deteksi Kondisi Visual')
 
 st.image('mobil.png', use_column_width=True)
 
@@ -83,16 +82,16 @@ with st.container():
         mileage = st.number_input('Jarak Tempuh (KM)', min_value=0)
 
 # Kamera untuk input gambar mobil
-st.subheader("📷 Ambil Gambar Mobil untuk Deteksi Kondisi Visual")
-image_file = st.camera_input("Gunakan kamera belakang untuk menangkap gambar mobil")
+st.subheader("📷 Ambil Gambar Mobil")
+image_file = st.camera_input("Gunakan kamera untuk mengambil gambar mobil...")
 
 # ---------------- Tombol Prediksi ----------------
-if st.button('🔍 Prediksi Harga & Kondisi Mobil'):
+if st.button('🔍 Prediksi Sekarang'):
     if year == 0 or mileage == 0 or image_file is None:
-        st.warning('Mohon lengkapi semua data input dan ambil gambar mobil!')
+        st.warning('⚠️ Mohon lengkapi semua data input dan ambil gambar mobil!')
     else:
-        with st.spinner('Memproses prediksi...'):
-            # --- Prediksi Harga Mobil ---
+        with st.spinner('Memproses prediksi harga dan kondisi mobil...'):
+            # --- Prediksi Harga ---
             try:
                 cat_features = pd.DataFrame({
                     'model': [selected_model],
@@ -112,13 +111,13 @@ if st.button('🔍 Prediksi Harga & Kondisi Mobil'):
                 st.write(f"📊 MAPE: {metrics['mape']:.2f}%")
                 st.write(f"📊 Akurasi Model: {metrics['accuracy']:.2f}%")
             except Exception as e:
-                st.error(f'❌ Gagal memproses prediksi harga: {str(e)}')
+                st.error(f'❌ Gagal prediksi harga: {str(e)}')
 
-            # --- Prediksi Kondisi Mobil dari Gambar ---
+            # --- Prediksi Kondisi Visual ---
             try:
                 condition_result = detect_condition(image_file)
-                st.subheader("🔍 Hasil Deteksi Kondisi Visual Mobil")
+                st.subheader("🛠️ Hasil Deteksi Kondisi Visual Mobil")
                 st.image(image_file, caption="Gambar Mobil", use_column_width=True)
-                st.write(f"🛠️ **Kondisi Mobil Terdeteksi:** {condition_result}")
+                st.write(f"📌 **Kondisi Mobil Terdeteksi:** `{condition_result}`")
             except Exception as e:
                 st.error(f'❌ Gagal mendeteksi kondisi mobil: {str(e)}')
