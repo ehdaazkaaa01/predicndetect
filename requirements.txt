@@ -3,3 +3,7 @@ pandas==1.4.4
 scikit-learn==1.0.2
 streamlit==1.17.0
 matplotlib==3.5.2
+xgboost
+Pillow
+tensorflow==2.15.0
+joblib
